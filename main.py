@@ -8,7 +8,6 @@ import sys
 
 from fetch_papers import fetch_today_papers, fetch_papers_by_date
 from translate import translate_papers
-from tag_papers import tag_papers
 from generate_html import build_html
 from generate_index import generate_main_index
 
@@ -61,8 +60,7 @@ def main():
     papers = translate_papers(papers)
 
     print("=" * 50)
-    print("Step 3: 打标签...")
-    papers = tag_papers(papers)
+    print("Step 3: 打标签（翻译时已完成）...")
 
     for tag in ["agent-benchmark", "agent-memory", "agentic-rl"]:
         count = sum(1 for p in papers if tag in p.get("tags", []))

@@ -38,14 +38,24 @@ def translate_papers(papers, model="qwen-flash"):
             prompt_parts.append(f'abstract: {t["summary"]}')
             prompt_parts.append("---")
 
-        prompt = f"""你是一个学术翻译专家。请将以下 {len(tasks)} 篇英文论文的标题和摘要翻译成中文，保持学术严谨性。
+        prompt = f"""你是一个学术翻译专家和NLP研究领域分类器。
 
-返回格式为 JSON 数组，每个元素包含 "index", "title", "summary" 三个字段，其中 index 对应输入编号。
+任务1: 将以下 {len(tasks)} 篇英文论文的标题和摘要翻译成中文
+任务2: 判断每篇论文是否属于以下三个领域（可多选，不属于则返回空数组）：
+  - agent-benchmark: 智能体/代理的基准测试、评估、排行榜
+  - agent-memory: 智能体/代理的记忆机制、记忆增强、记忆检索
+  - agentic-rl: 智能体/代理的强化学习、RL训练方法
+
+返回 JSON 数组，每个元素包含：
+  - "index": 编号
+  - "title": 中文标题
+  - "summary": 中文摘要
+  - "tags": 领域标签数组，如 ["agent-benchmark", "agentic-rl"]
 
 输入：
 {chr(10).join(prompt_parts)}
 
-请只返回 JSON 数组。"""
+只返回 JSON 数组。"""
 
         for attempt in range(3):
             try:
@@ -71,6 +81,7 @@ def translate_papers(papers, model="qwen-flash"):
                         continue
                     papers[idx]["title_translated"] = item.get("title", "")
                     papers[idx]["summary_translated"] = item.get("summary", "")
+                    papers[idx]["tags"] = item.get("tags", [])
 
                 translated = len(results_list)
                 print(f"  批次 {batch_idx+1}/{len(batches)}: 翻译 {translated} 篇 ✓")
