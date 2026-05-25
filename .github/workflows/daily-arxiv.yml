@@ -1,0 +1,63 @@
+name: Daily arXiv Paper
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '指定日期 (YYYY-MM-DD)，留空为当天'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        run: |
+          if [ -n "${{ inputs.date }}" ]; then
+            python main.py --date "${{ inputs.date }}"
+          else
+            python main.py
+          fi
+        env:
+          DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+
+      - name: Commit output
+        run: |
+          git config user.name "arxiv-bot"
+          git config user.email "bot@example.com"
+          git add output/
+          git commit -m "daily: arXiv cs.CL papers $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git push
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
