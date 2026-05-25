@@ -30,7 +30,7 @@ def build_html(papers, date_label, output_dir):
         title_cn = p.get("title_translated", "") or ""
         summary_cn = p.get("summary_translated", "") or ""
         title_en = p["title"]
-        summary_en = p["summary"][:300] + ("..." if len(p["summary"]) > 300 else "")
+        summary_en = p["summary"]
         authors = ", ".join(p["authors"][:5])
         if len(p["authors"]) > 5:
             authors += " et al."
