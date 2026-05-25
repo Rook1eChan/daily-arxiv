@@ -162,48 +162,85 @@ def fetch_today_papers():
     return date_str, papers
 
 
-def fetch_papers_by_date(target_date):
-    y, m, d = target_date.split("-")
-    date_from = f"{y}{m}{d}0000"
-    date_to = f"{y}{m}{d}2359"
-    query = f"cat:cs.CL+AND+submittedDate:[{date_from}+TO+{date_to}]"
-    url = f"{API_URL}?search_query={query}&sortBy=submittedDate&sortOrder=descending&max_results=500"
-
-    resp = _request(url)
-    resp.raise_for_status()
-    root = ET.fromstring(resp.text)
+def _extract_from_h3(h3_tag):
+    dts, dds = [], []
+    curr = h3_tag.find_next_sibling()
+    while curr and curr.name != "h3":
+        if curr.name == "dt":
+            dts.append(curr)
+        elif curr.name == "dd":
+            dds.append(curr)
+        curr = curr.find_next_sibling()
 
     papers = []
-    for entry in root.findall("atom:entry", NS):
-        entry_id = entry.find("atom:id", NS).text.strip()
-        arxiv_id = entry_id.split("/")[-1].split("v")[0]
-        title = entry.find("atom:title", NS).text.strip().replace("\n", " ")
-        summary = entry.find("atom:summary", NS).text.strip().replace("\n", " ")
-        published = entry.find("atom:published", NS).text.strip()
+    for i, dt in enumerate(dts):
+        id_link = dt.find("a", id=True)
+        if not id_link:
+            continue
+        p = {"arxiv_id": id_link["id"], "summary": "", "published": "", "published_date": ""}
+        if i < len(dds):
+            dd = dds[i]
+            title_div = dd.find("div", class_="list-title")
+            p["title"] = re.sub(r"^Title:\s*", "", title_div.get_text(" ", strip=True)) if title_div else ""
+            authors_div = dd.find("div", class_="list-authors")
+            p["authors"] = [a.get_text(strip=True) for a in authors_div.find_all("a")] if authors_div else []
+            subjects_div = dd.find("div", class_="list-subjects")
+            if subjects_div:
+                text = re.sub(r"^Subjects:\s*", "", subjects_div.get_text(" ", strip=True))
+                p["categories"] = [s.strip() for s in text.split(";")]
+                p["primary_category"] = p["categories"][0] if p["categories"] else ""
+            else:
+                p["categories"] = []
+                p["primary_category"] = ""
+            comments_div = dd.find("div", class_="list-comments")
+            p["comment"] = re.sub(r"^Comments:\s*", "", comments_div.get_text(" ", strip=True)) if comments_div else ""
+        p.setdefault("title", "")
+        p.setdefault("authors", [])
+        p.setdefault("categories", [])
+        p.setdefault("primary_category", "")
+        p.setdefault("comment", "")
+        papers.append(p)
+    return papers
 
-        authors = [a.find("atom:name", NS).text.strip() for a in entry.findall("atom:author", NS)]
 
-        categories = []
-        for cat in entry.findall("atom:category", NS):
-            categories.append(cat.attrib.get("term", ""))
+def fetch_papers_by_date(target_date):
+    from datetime import datetime
+    target_dt = datetime.strptime(target_date, "%Y-%m-%d")
+    expected_label = target_dt.strftime("%a, %d %b %Y")
 
-        primary = entry.find("arxiv:primary_category", NS)
-        primary_category = primary.attrib.get("term", "") if primary is not None else ""
+    skip = 0
+    while True:
+        resp = _request(f"{LIST_URL}?skip={skip}&show=250")
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        dl = soup.find("dl", id="articles")
+        if not dl:
+            break
 
-        comment_el = entry.find("arxiv:comment", NS)
-        comment = comment_el.text.strip() if comment_el is not None else ""
+        h3 = dl.find("h3")
+        if not h3:
+            break
 
-        papers.append({
-            "arxiv_id": arxiv_id,
-            "title": title,
-            "summary": summary,
-            "authors": authors,
-            "categories": categories,
-            "primary_category": primary_category,
-            "comment": comment,
-            "published": published,
-            "published_date": published[:10],
-        })
+        h3_text = h3.get_text(strip=True)
+        m_date = re.match(r"([A-Za-z]+,\s+\d+\s+[A-Za-z]+\s+\d{4})", h3_text)
+        if not m_date:
+            break
 
-    date_str = f"{m}/{d}/{y}" if papers else target_date
-    return date_str, papers
+        page_date_label = m_date.group(1)
+        if page_date_label == expected_label:
+            papers = _extract_from_h3(h3)
+            ids = [p["arxiv_id"] for p in papers]
+            abstracts = fetch_abstracts(ids)
+            for p in papers:
+                if p["arxiv_id"] in abstracts:
+                    p.update(abstracts[p["arxiv_id"]])
+            return page_date_label, papers
+
+        # Get total entries for this page to compute next skip
+        m_total = re.search(r"(?:of|of first)\s+(\d+)\s+entries", h3_text)
+        if not m_total:
+            break
+        total = int(m_total.group(1))
+        skip += total
+
+    return target_date, []

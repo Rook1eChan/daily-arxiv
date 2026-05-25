@@ -45,8 +45,8 @@ def main():
         date_str, papers = fetch_today_papers()
 
     if not papers:
-        print("未能获取论文")
-        sys.exit(1)
+        print("未能获取论文（arXiv 周末不更新或指定日期无新投稿）")
+        return
 
     date_dir = date_to_dirname(date_str if date_str else args.date or "")
     output_dir = os.path.join(base_dir, "output", date_dir)
