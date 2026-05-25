@@ -104,21 +104,33 @@ def fetch_abstracts(arxiv_ids):
     for i in range(0, len(arxiv_ids), 50):
         batch = arxiv_ids[i:i + 50]
         url = f"{API_URL}?id_list={','.join(batch)}&max_results={len(batch)}"
-        try:
-            resp = _request(url)
-            if resp.status_code == 429:
-                print("  API 限流，跳过摘要获取")
-                return result
-            resp.raise_for_status()
-            root = ET.fromstring(resp.text)
-            for entry in root.findall("atom:entry", NS):
-                eid = entry.find("atom:id", NS).text.strip().split("/")[-1].split("v")[0]
-                summary = entry.find("atom:summary", NS).text.strip().replace("\n", " ")
-                published = entry.find("atom:published", NS).text.strip()
-                result[eid] = {"summary": summary, "published": published, "published_date": published[:10]}
-        except Exception as e:
-            print(f"  API 请求失败: {e}")
-        time.sleep(1)
+
+        for retry in range(4):
+            try:
+                resp = _request(url)
+                if resp.status_code == 429:
+                    if retry < 3:
+                        print(f"  API 限流，等待 60s 后重试 ({retry+1}/3)...")
+                        time.sleep(60)
+                        continue
+                    print("  重试耗尽，跳过该批次摘要获取")
+                    break
+                resp.raise_for_status()
+                root = ET.fromstring(resp.text)
+                for entry in root.findall("atom:entry", NS):
+                    eid = entry.find("atom:id", NS).text.strip().split("/")[-1].split("v")[0]
+                    summary = entry.find("atom:summary", NS).text.strip().replace("\n", " ")
+                    published = entry.find("atom:published", NS).text.strip()
+                    result[eid] = {"summary": summary, "published": published, "published_date": published[:10]}
+                break
+            except Exception as e:
+                print(f"  API 请求失败: {e}")
+                if retry < 3:
+                    time.sleep(60)
+                else:
+                    print("  重试耗尽，跳过该批次")
+
+        time.sleep(2)
     return result
 
 
