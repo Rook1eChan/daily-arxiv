@@ -57,7 +57,7 @@ def main():
 
     print("=" * 50)
     print("Step 2: 翻译标题和摘要...")
-    papers = translate_papers(papers)
+    papers, token_usage = translate_papers(papers)
 
     print("=" * 50)
     print("Step 3: 打标签（翻译时已完成）...")
@@ -66,7 +66,17 @@ def main():
         count = sum(1 for p in papers if tag in p.get("tags", []))
         print(f"  {tag}: {count} 篇")
 
+    pt = token_usage["prompt_tokens"]
+    ct = token_usage["completion_tokens"]
+    tt = token_usage["total_tokens"]
+    print(f"\n  Token 消耗: prompt={pt}, completion={ct}, total={tt}")
+    print(f"  模型: qwen-flash (免费)")
+
     os.makedirs(output_dir, exist_ok=True)
+    token_file = os.path.join(output_dir, "token_usage.txt")
+    if not os.path.exists(token_file):
+        with open(token_file, "w", encoding="utf-8") as f:
+            f.write(f"prompt_tokens: {pt}\ncompletion_tokens: {ct}\ntotal_tokens: {tt}\n")
     data_file = os.path.join(output_dir, "papers.json")
     with open(data_file, "w", encoding="utf-8") as f:
         json.dump(papers, f, ensure_ascii=False, indent=2)

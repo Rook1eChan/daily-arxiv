@@ -22,10 +22,12 @@ def translate_papers(papers, model="qwen-flash"):
 
     if not to_translate:
         print("没有需要翻译的论文")
-        return papers
+        return papers, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
     print(f"需要翻译 {len(to_translate)} 篇论文 (每批 {BATCH_SIZE} 篇)...")
     batches = [to_translate[i:i + BATCH_SIZE] for i in range(0, len(to_translate), BATCH_SIZE)]
+
+    token_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
     for batch_idx, batch in enumerate(batches):
         tasks = [{"index": i, "arxiv_id": p["arxiv_id"], "title": p["title"], "summary": p["summary"]}
@@ -67,6 +69,11 @@ def translate_papers(papers, model="qwen-flash"):
                 )
                 content = resp.choices[0].message.content.strip()
 
+                if resp.usage:
+                    token_usage["prompt_tokens"] += resp.usage.prompt_tokens or 0
+                    token_usage["completion_tokens"] += resp.usage.completion_tokens or 0
+                    token_usage["total_tokens"] += resp.usage.total_tokens or 0
+
                 if content.startswith("```"):
                     content = content.split("\n", 1)[1].rsplit("\n", 1)[0]
                     if content.endswith("```"):
@@ -93,4 +100,4 @@ def translate_papers(papers, model="qwen-flash"):
         else:
             print(f"  批次 {batch_idx+1} 翻译失败，跳过")
 
-    return papers
+    return papers, token_usage
