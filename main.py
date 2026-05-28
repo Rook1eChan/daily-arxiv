@@ -39,6 +39,7 @@ def main():
     print("=" * 50)
     if args.date:
         print(f"Step 1: 获取 {args.date} 的论文...")
+        date_str, papers = fetch_papers_by_date(args.date)
     else:
         print("Step 1: 抓取 arXiv 今日论文...")
         date_str, papers = fetch_today_papers()
