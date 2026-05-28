@@ -101,8 +101,9 @@ def fetch_abstracts(arxiv_ids):
     if not arxiv_ids:
         return {}
     result = {}
-    for i in range(0, len(arxiv_ids), 50):
-        batch = arxiv_ids[i:i + 50]
+    batch_size = 25
+    for i in range(0, len(arxiv_ids), batch_size):
+        batch = arxiv_ids[i:i + batch_size]
         url = f"{API_URL}?id_list={','.join(batch)}&max_results={len(batch)}"
 
         for retry in range(4):
@@ -110,8 +111,9 @@ def fetch_abstracts(arxiv_ids):
                 resp = _request(url)
                 if resp.status_code == 429:
                     if retry < 3:
-                        print(f"  API 限流，等待 60s 后重试 ({retry+1}/3)...")
-                        time.sleep(60)
+                        wait = int(resp.headers.get("Retry-After", 30))
+                        print(f"  API 限流，等待 {wait}s 后重试 ({retry+1}/3)...")
+                        time.sleep(wait)
                         continue
                     print("  重试耗尽，跳过该批次摘要获取")
                     break
@@ -126,11 +128,11 @@ def fetch_abstracts(arxiv_ids):
             except Exception as e:
                 print(f"  API 请求失败: {e}")
                 if retry < 3:
-                    time.sleep(60)
+                    time.sleep(30)
                 else:
                     print("  重试耗尽，跳过该批次")
 
-        time.sleep(2)
+        time.sleep(5)
     return result
 
 
