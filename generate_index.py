@@ -61,7 +61,7 @@ def build_index(entries, output_dir):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>arXiv cs.CL 每日论文 - 总览</title>
+<title>Daily arXiv - 总览</title>
 <style>
 :root {{ --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --sec: #64748b; --border: #e2e8f0; }}
 body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }}
@@ -86,7 +86,7 @@ a:hover {{ text-decoration: underline; }}
 <body>
 <div class="container">
     <div class="header">
-        <h1>📄 arXiv cs.CL 每日论文</h1>
+        <h1>📄 Daily arXiv</h1>
         <div class="subtitle">自动抓取 + AI 翻译 + 领域打标 · 共 {len(entries)} 天</div>
     </div>
 
@@ -95,7 +95,7 @@ a:hover {{ text-decoration: underline; }}
         <div class="manual-box">
             <p>在 GitHub 仓库手动触发 Workflow，填写日期即可：</p>
             <ol>
-                <li>打开 <a href="https://github.com/Rook1eChan/arxiv-daily-cscl/actions" target="_blank">Actions 页面</a></li>
+                <li>打开 <a href="https://github.com/Rook1eChan/daily-arxiv/actions" target="_blank">Actions 页面</a></li>
                 <li>选择 <strong>Daily arXiv Paper</strong> → 点击 <strong>Run workflow</strong></li>
                 <li>在 <strong>date</strong> 输入框填入日期，格式 <code>YYYY-MM-DD</code>（如 <code>2026-05-22</code>）</li>
                 <li>点击 <strong>Run workflow</strong>，等待完成</li>
@@ -114,7 +114,7 @@ a:hover {{ text-decoration: underline; }}
     </div>
 
     <div class="footer">
-        <a href="https://github.com/Rook1eChan/arxiv-daily-cscl" target="_blank">GitHub 仓库</a>
+        <a href="https://github.com/Rook1eChan/daily-arxiv" target="_blank">GitHub 仓库</a>
         · 数据来源: <a href="https://arxiv.org/list/cs.CL/recent" target="_blank">arXiv cs.CL</a>
         · 翻译: 阿里百炼 Qwen
     </div>

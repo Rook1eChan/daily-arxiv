@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arXiv cs.CL 每日论文抓取、翻译、打标签、生成网页"""
+"""Daily arXiv: 每日论文抓取、翻译、打标签、生成网页"""
 
 import argparse
 import json
@@ -30,7 +30,7 @@ def date_to_dirname(date_str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="arXiv cs.CL 每日论文抓取")
+    parser = argparse.ArgumentParser(description="Daily arXiv: 每日论文抓取")
     parser.add_argument("--date", help="指定日期 (YYYY-MM-DD)，如 2026-05-22")
     args = parser.parse_args()
 
@@ -38,10 +38,9 @@ def main():
 
     print("=" * 50)
     if args.date:
-        print(f"Step 1: 获取 {args.date} 的 cs.CL 论文...")
-        date_str, papers = fetch_papers_by_date(args.date)
+        print(f"Step 1: 获取 {args.date} 的论文...")
     else:
-        print("Step 1: 抓取 arXiv cs.CL 今日论文...")
+        print("Step 1: 抓取 arXiv 今日论文...")
         date_str, papers = fetch_today_papers()
 
     if not papers:

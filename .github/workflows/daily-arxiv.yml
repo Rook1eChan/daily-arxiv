@@ -48,7 +48,7 @@ jobs:
           git config user.email "bot@example.com"
           git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
           git add output/
-          git commit -m "daily: arXiv cs.CL papers $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git commit -m "daily: arXiv papers $(date +%Y-%m-%d)" || echo "No changes to commit"
           git pull --rebase origin main
           git push
 

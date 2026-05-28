@@ -1,4 +1,4 @@
-# arXiv cs.CL 每日论文
+# Daily arXiv
 
 每天自动抓取 [arXiv cs.CL](https://arxiv.org/list/cs.CL/recent) 最新论文，翻译标题和摘要，对 agent 相关领域打标签，生成网页方便浏览。
 
@@ -15,7 +15,7 @@
 
 ## 手动获取指定日期
 
-在 [Actions 页面](https://github.com/Rook1eChan/arxiv-daily-cscl/actions) 点击 **Run workflow**，填写日期 `YYYY-MM-DD`（如 `2026-05-22`）即可。
+在 [Actions 页面](https://github.com/Rook1eChan/daily-arxiv/actions) 点击 **Run workflow**，填写日期 `YYYY-MM-DD`（如 `2026-05-22`）即可。
 
 ## 本地运行
 

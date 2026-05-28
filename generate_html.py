@@ -86,7 +86,7 @@ def build_html(papers, date_label, output_dir):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>arXiv cs.CL 每日论文 - {date_label}</title>
+<title>Daily arXiv - {date_label}</title>
 <style>
 :root {{ --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --text-secondary: #64748b; --border: #e2e8f0; }}
 body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.6; }}
@@ -122,7 +122,7 @@ details summary {{ font-size: 0.85em; color: #2563eb; cursor: pointer; user-sele
 <body>
 <div class="container">
     <div class="header">
-        <h1>📄 arXiv cs.CL 每日论文</h1>
+        <h1>📄 Daily arXiv</h1>
         <div class="subtitle">{date_label} · 共 {len(papers)} 篇</div>
         <div class="nav">
             <a href="#all" style="background:#e2e8f0;color:#1e293b">📋 全部 ({len(papers)})</a>
@@ -136,7 +136,7 @@ details summary {{ font-size: 0.85em; color: #2563eb; cursor: pointer; user-sele
     <div class="paper-list">{all_cards}</div>
 
     <div class="footer">
-        由自动脚本抓取 · 数据来源: <a href="https://arxiv.org/list/cs.CL/recent" target="_blank">arXiv cs.CL</a> · 翻译: 阿里百炼 Qwen
+        由自动脚本抓取 · 数据来源: <a href="https://arxiv.org/list/cs.CL/recent" target="_blank">arXiv cs.CL</a> · 翻译: 阿里百炼 Qwen · <a href="https://github.com/Rook1eChan/daily-arxiv" target="_blank">GitHub</a>
     </div>
 </div>
 </body>
