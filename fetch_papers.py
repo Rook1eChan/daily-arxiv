@@ -101,38 +101,51 @@ def fetch_abstracts(arxiv_ids):
     if not arxiv_ids:
         return {}
     result = {}
-    batch_size = 25
-    for i in range(0, len(arxiv_ids), batch_size):
-        batch = arxiv_ids[i:i + batch_size]
-        url = f"{API_URL}?id_list={','.join(batch)}&max_results={len(batch)}"
 
-        for retry in range(4):
-            try:
-                resp = _request(url)
-                if resp.status_code == 429:
-                    if retry < 3:
-                        wait = int(resp.headers.get("Retry-After", 30))
-                        print(f"  API 限流，等待 {wait}s 后重试 ({retry+1}/3)...")
-                        time.sleep(wait)
-                        continue
-                    print("  重试耗尽，跳过该批次摘要获取")
+    # Probe API health first - if it fails, skip API entirely
+    api_ok = True
+    probe_url = f"{API_URL}?id_list={arxiv_ids[0]}&max_results=1"
+    try:
+        probe_resp = _request(probe_url)
+        if probe_resp.status_code != 200:
+            api_ok = False
+    except Exception:
+        api_ok = False
+    if not api_ok:
+        print("  arXiv API 不可用，直接使用页面抓取...")
+    else:
+        batch_size = 25
+        for i in range(0, len(arxiv_ids), batch_size):
+            batch = arxiv_ids[i:i + batch_size]
+            url = f"{API_URL}?id_list={','.join(batch)}&max_results={len(batch)}"
+
+            for retry in range(4):
+                try:
+                    resp = _request(url)
+                    if resp.status_code == 429:
+                        if retry < 3:
+                            wait = int(resp.headers.get("Retry-After", 30))
+                            print(f"  API 限流，等待 {wait}s 后重试 ({retry+1}/3)...")
+                            time.sleep(wait)
+                            continue
+                        print("  重试耗尽，跳过该批次摘要获取")
+                        break
+                    resp.raise_for_status()
+                    root = ET.fromstring(resp.text)
+                    for entry in root.findall("atom:entry", NS):
+                        eid = entry.find("atom:id", NS).text.strip().split("/")[-1].split("v")[0]
+                        summary = entry.find("atom:summary", NS).text.strip().replace("\n", " ")
+                        published = entry.find("atom:published", NS).text.strip()
+                        result[eid] = {"summary": summary, "published": published, "published_date": published[:10]}
                     break
-                resp.raise_for_status()
-                root = ET.fromstring(resp.text)
-                for entry in root.findall("atom:entry", NS):
-                    eid = entry.find("atom:id", NS).text.strip().split("/")[-1].split("v")[0]
-                    summary = entry.find("atom:summary", NS).text.strip().replace("\n", " ")
-                    published = entry.find("atom:published", NS).text.strip()
-                    result[eid] = {"summary": summary, "published": published, "published_date": published[:10]}
-                break
-            except Exception as e:
-                print(f"  API 请求失败: {e}")
-                if retry < 3:
-                    time.sleep(30)
-                else:
-                    print("  重试耗尽，跳过该批次")
+                except Exception as e:
+                    print(f"  API 请求失败: {e}")
+                    if retry < 3:
+                        time.sleep(10)
+                    else:
+                        print("  重试耗尽，跳过该批次")
 
-        time.sleep(5)
+            time.sleep(5)
 
     # Fallback: scrape individual abs pages for missing entries
     missing = [aid for aid in arxiv_ids if aid not in result]
