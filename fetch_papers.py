@@ -133,6 +133,31 @@ def fetch_abstracts(arxiv_ids):
                     print("  重试耗尽，跳过该批次")
 
         time.sleep(5)
+
+    # Fallback: scrape individual abs pages for missing entries
+    missing = [aid for aid in arxiv_ids if aid not in result]
+    if missing:
+        print(f"  API 未获取到 {len(missing)} 篇摘要，改用页面抓取...")
+        for idx, aid in enumerate(missing):
+            try:
+                resp = _request(f"https://arxiv.org/abs/{aid}")
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.text, "html.parser")
+                abstract = soup.find("blockquote", class_="abstract")
+                summary = abstract.get_text(" ", strip=True) if abstract else ""
+                summary = re.sub(r"^Abstract:\s*", "", summary)
+                # Parse published date from metadata
+                published = ""
+                meta = soup.find("meta", attrs={"name": "citation_date"})
+                if meta and meta.get("content"):
+                    published = meta["content"]
+                result[aid] = {"summary": summary, "published": published, "published_date": published[:10]}
+            except Exception as e:
+                print(f"  抓取 {aid} 失败: {e}")
+            if idx < len(missing) - 1:
+                time.sleep(0.5)
+        print(f"  页面抓取完成，共获取 {len([a for a in missing if a in result])} 篇")
+
     return result
 
 
