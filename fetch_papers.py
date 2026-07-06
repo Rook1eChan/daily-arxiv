@@ -258,7 +258,6 @@ def _extract_from_h3(h3_tag):
 def fetch_papers_by_date(target_date):
     from datetime import datetime
     target_dt = datetime.strptime(target_date, "%Y-%m-%d")
-    expected_label = target_dt.strftime("%a, %d %b %Y")
 
     skip = 0
     while True:
@@ -279,7 +278,8 @@ def fetch_papers_by_date(target_date):
             break
 
         page_date_label = m_date.group(1)
-        if page_date_label == expected_label:
+        page_dt = datetime.strptime(page_date_label, "%a, %d %b %Y")
+        if page_dt.date() == target_dt.date():
             papers = _extract_from_h3(h3)
             ids = [p["arxiv_id"] for p in papers]
             abstracts = fetch_abstracts(ids)
