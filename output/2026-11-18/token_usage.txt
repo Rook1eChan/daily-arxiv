@@ -1,0 +1,3 @@
+prompt_tokens: 38422
+completion_tokens: 35033
+total_tokens: 73455
